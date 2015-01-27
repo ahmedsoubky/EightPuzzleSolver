@@ -20,18 +20,16 @@ typedef struct Node
 	int g;
 	int h;
 	int f;
+	Node* left;
+	Node* right;
+	Node* up;
+	Node* down;
 
 }Node;
 
 
-typedef struct Tree
-{
-	vector< Node > states;
-	int distance;
-}Tree;
 
-
-vector< Node > tree;
+vector< Node > tree(4);
 
 int coordinates[] = {0,1};
 
@@ -207,17 +205,18 @@ vector< Node > expand ( int input[][3] )
 
 /* Implementation of the A* algorithm based on the Manhattan distance heuristic */
 int aStarAlgorithm ( int problem[][3] , int goal[][3])
-{
-	//int** currentState = problem;
-
-	vector< priority_queue< Node, vector < int >, greater< int > > >  fringe;
-	priority_queue< Node, vector < int >, greater< int > > initial(problem[0], problem[2]	+3);
-	fringe.push_back(initial);
-
-
-	
+{	
 	while(1)
 	{
+		Node* currentState;
+		currentState->g =0;
+		currentState->h = 0;
+		currentState->f =0;
+		currentState->down = 
+		vector< Node > fringe;
+		fringe = expand(problem);
+
+		if( fringe[0].f 
 	
 		if( fringe.empty() )
 		{
@@ -225,11 +224,7 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 		}
 		else
 		{
-			//vector< Node > temp = expand(currentState);
-			//priority_queue< int, vector < int >, greater< int > > fvalues;
-			//for (vector< Node >::iterator it=temp.begin(); it!=temp.end(); ++it)
-			//{
-			//	fvalues.push( (it)->h + (it)->g );
+
 
 
 		}
@@ -240,10 +235,8 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 	
 	for( int i=0;i<8;i++)
 		cout<<hvalue[i]<<'\t';
-
 	*/
 	/*
-
 	*/
 
 }
