@@ -14,8 +14,9 @@ int input[3][3] = { {7,2,0} ,{5,4,6} ,{8,3,1} };
 int numbers[3][3] = { {0,1,2} ,{3,4,5},{6,7,8} } ;
 
 
-typedef struct Node
+class Node
 {
+public:
 	int node[3][3];
 	int g;
 	int h;
@@ -25,11 +26,26 @@ typedef struct Node
 	Node* up;
 	Node* down;
 
-}Node;
+};
 
+class mycomparison
+{
+  bool reverse;
+public:
+  mycomparison(const bool& revparam=false)
+    {reverse=revparam;}
+  bool operator() (const Node& lhs, const Node&rhs) const
+  {
+	  if (reverse) return (lhs.f>rhs.f);
+    else return (lhs.f<rhs.f);
+  }
+};
 
 
 vector< Node > tree(4);
+
+typedef priority_queue< Node ,vector< Node >,mycomparison > queuetype;
+
 
 int coordinates[] = {0,1};
 
@@ -137,7 +153,7 @@ vector< Node > expand ( int input[][3] )
 	/* right (i,j+1)*/
 	if( !( (y+1) > 2) )
 	{
-		swap(outputRight.node[x][y],outputRight.node[x][y+1]);
+		swap(&outputRight,x,y,x,y+1);
 		for( int i=0;i<3;++i)
 			for(int j=0;j<3;++j)
 				cout<<outputRight.node[i][j]<<'\t';
@@ -179,7 +195,7 @@ vector< Node > expand ( int input[][3] )
 	/* down (i+1,j) */ 
 	if( !( (x+1) > 2) )
 	{
-		swap(&outputDown,x,y,x-1,y);
+		swap(&outputDown,x,y,x+1,y);
 		for( int i=0;i<3;++i)
 			for(int j=0;j<3;++j)
 				cout<<outputDown.node[i][j]<<'\t';
@@ -189,7 +205,7 @@ vector< Node > expand ( int input[][3] )
 		outputDown.f = outputDown.g + outputDown.h;
 		tree.push_back(outputDown);
 	}
-
+	
 	for (vector< Node >::iterator it=tree.begin(); it!=tree.end(); ++it)
 	{
 		for( int i=0;i<3;++i)
@@ -197,7 +213,7 @@ vector< Node > expand ( int input[][3] )
 				cout<<it->node[i][j]<<'\t';
 		cout<<endl;
 	}
-
+	
 	return tree;
 
 }
@@ -206,39 +222,35 @@ vector< Node > expand ( int input[][3] )
 /* Implementation of the A* algorithm based on the Manhattan distance heuristic */
 int aStarAlgorithm ( int problem[][3] , int goal[][3])
 {	
-	while(1)
-	{
-		Node* currentState;
-		currentState->g =0;
-		currentState->h = 0;
-		currentState->f =0;
-		currentState->down = 
-		vector< Node > fringe;
-		fringe = expand(problem);
-
-		if( fringe[0].f 
-	
-		if( fringe.empty() )
+	//while(1)
+	//{
+		
+		queuetype queue;
+		
+		expand(problem);
+		
+		for( vector < Node >::iterator i=tree.begin();i!=tree.end();++i)
 		{
-			return 0;
+			queue.push((*i));
 		}
-		else
+		
+		int i=1;
+		
+		while(!queue.empty())
 		{
-
-
-
+			cout<<i++<<'\t';
+			Node tmp = queue.top();
+			for(int i=0;i<3;++i)
+			{
+				for(int j=0;j<3;++j)
+				{
+					cout<<tmp.node[i][j]<<'\t';
+				}
+			}
+			queue.pop();
+			cout<<endl;
 		}
-	}
-	/*
-	for( int i=0;i<8;i++)
-		hvalue.push_back(input[i] - i);
-	
-	for( int i=0;i<8;i++)
-		cout<<hvalue[i]<<'\t';
-	*/
-	/*
-	*/
-
+	return 0;
 }
 
 
@@ -246,8 +258,6 @@ void main ()
 {
 
 	cout<<"H(input):"<<calculateHValue(input)<<endl;
-
-	expand(input);
 
 	aStarAlgorithm(input,numbers);
 	
@@ -264,3 +274,4 @@ void main ()
 	}
 
 }
+
