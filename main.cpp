@@ -8,7 +8,7 @@ using namespace std;
 
 
 /* Input to the 3x3 puzzle as a 2D array */
-int input[3][3] = { {7,2,0} ,{5,4,6} ,{8,3,1} };
+int input[3][3] = { {7,2,4} ,{5,0,6} ,{8,3,1} };
 
 /* The numbers in their correct positions to be used in the calculation of Manhattan distance */
 int numbers[3][3] = { {0,1,2} ,{3,4,5},{6,7,8} } ;
@@ -18,9 +18,9 @@ class Node
 {
 public:
 	int node[3][3];
-	int g;
-	int h;
-	int f;
+	float g;
+	float h;
+	float f;
 	Node* left;
 	Node* right;
 	Node* up;
@@ -42,10 +42,13 @@ public:
 };
 
 
-vector< Node > tree(4);
+
+
+Node current;
 
 typedef priority_queue< Node ,vector< Node >,mycomparison > queuetype;
 
+queuetype tree(mycomparison(true));
 
 int coordinates[] = {0,1};
 
@@ -101,7 +104,7 @@ int calculateHValue ( int problem[][3] )
 }
 
 /* Expands the current node into the possible successors*/
-vector< Node > expand ( int input[][3] )
+Node expand ( int input[][3] )
 {
 	Node outputLeft;
 	Node outputRight;
@@ -157,11 +160,12 @@ vector< Node > expand ( int input[][3] )
 		for( int i=0;i<3;++i)
 			for(int j=0;j<3;++j)
 				cout<<outputRight.node[i][j]<<'\t';
-		cout<<"right"<<endl;
+		cout<<"right"<<' ';
 		outputRight.g += 1;
 		outputRight.h  = calculateHValue(outputRight.node);
 		outputRight.f = outputRight.g + outputRight.h;
-		tree.push_back(outputRight);
+		cout<<outputRight.f<<endl;
+		tree.push(outputRight);
 	}
 		
 	/* left (i,j-1)*/
@@ -171,11 +175,12 @@ vector< Node > expand ( int input[][3] )
 		for( int i=0;i<3;++i)
 			for(int j=0;j<3;++j)
 				cout<<outputLeft.node[i][j]<<'\t';
-		cout<<"left"<<endl;
+		cout<<"left"<<' ';
 		outputLeft.g +=1;
 		outputLeft.h = calculateHValue(outputLeft.node);
-		outputLeft.f = output.g + output.h;
-		tree.push_back(outputLeft);
+		outputLeft.f = outputLeft.g + outputLeft.h;
+		cout<<outputLeft.f<<endl;
+		tree.push(outputLeft);
 	}
 
 	/* up (i-1,j) */
@@ -185,11 +190,12 @@ vector< Node > expand ( int input[][3] )
 		for( int i=0;i<3;++i)
 			for(int j=0;j<3;++j)
 				cout<<outputUp.node[i][j]<<'\t';
-		cout<<"up"<<endl;
+		cout<<"up"<<' ';
 		outputUp.g += 1;
 		outputUp.h = calculateHValue(outputUp.node);
 		outputUp.f = outputUp.g + outputUp.h;
-		tree.push_back(outputUp);
+		cout<<outputUp.f<<endl;
+		tree.push(outputUp);
 	}
 
 	/* down (i+1,j) */ 
@@ -199,58 +205,141 @@ vector< Node > expand ( int input[][3] )
 		for( int i=0;i<3;++i)
 			for(int j=0;j<3;++j)
 				cout<<outputDown.node[i][j]<<'\t';
-		cout<<"down"<<endl;
+		cout<<"down"<<' ';
 		outputDown.g += 1;
 		outputDown.h = calculateHValue(outputDown.node);
 		outputDown.f = outputDown.g + outputDown.h;
-		tree.push_back(outputDown);
+		cout<<outputDown.f<<endl;
+		tree.push(outputDown);
 	}
 	
-	for (vector< Node >::iterator it=tree.begin(); it!=tree.end(); ++it)
-	{
-		for( int i=0;i<3;++i)
-			for(int j=0;j<3;++j)
-				cout<<it->node[i][j]<<'\t';
-		cout<<endl;
-	}
-	
-	return tree;
+	current = tree.top();
 
+	while(!tree.empty())
+		tree.pop();
+
+
+	return current;
+
+}
+
+bool isGoal( Node x )
+{
+	bool result =true;
+	bool temp[3][3];
+	for(int i=0;i<3;++i)
+	{
+		for(int j=0;j<3;++j)
+		{
+			if( x.node[i][j] = numbers[i][j] )
+			{
+				temp[i][j] = true;
+			}
+			else
+			{
+				temp[i][j] = false;
+			}
+		}
+	}
+
+	for (int i=0;i<3;++i)
+	{
+		for(int j=0;j<3;++j)
+		{
+			result&=temp[i][j];
+		}
+	}
+	return result;
 }
 
 
 /* Implementation of the A* algorithm based on the Manhattan distance heuristic */
 int aStarAlgorithm ( int problem[][3] , int goal[][3])
-{	
-	//while(1)
-	//{
-		
-		queuetype queue;
-		
-		expand(problem);
-		
-		for( vector < Node >::iterator i=tree.begin();i!=tree.end();++i)
+{
+
+	queuetype queue;
+	queuetype fringe;
+	
+	Node initial;
+	for(int i=0;i<3;++i)
+	{
+		for(int j=0;j<3;++j)
 		{
-			queue.push((*i));
+			initial.node[i][j] = problem[i][j];
+		}
+	}
+	fringe.push(initial);
+
+	while(1)
+	{
+		
+		Node next = expand(fringe.top().node);
+
+		fringe.push(next);
+
+		if( fringe.empty() )
+		{
+			return 0;
 		}
 		
-		int i=1;
-		
-		while(!queue.empty())
+		if ( isGoal(fringe.top()) ) 
 		{
-			cout<<i++<<'\t';
-			Node tmp = queue.top();
+			cout<<"fringe:"<<endl;
 			for(int i=0;i<3;++i)
 			{
 				for(int j=0;j<3;++j)
 				{
-					cout<<tmp.node[i][j]<<'\t';
+					cout<<fringe.top().node[i][j]<<'\t';
 				}
 			}
-			queue.pop();
-			cout<<endl;
+			cout<<"test"<<endl;
+			
+			return fringe.size();
 		}
-	return 0;
+
+	}	
+	/*
+	for(int i1=0;i1<3;++i1)
+	{		
+		for(int j=0;j<3;++j)
+		{
+			cout<<next.node[i1][j]<<'\t';
+		}
+	}
+	cout<<endl;
+	*/
+
+
+	/*n
+	for( vector < Node >::iterator i=tree.begin();i!=tree.end();++i)
+	{
+		queue.push((*i));
+		for(int i1=0;i1<3;++i1)
+		{
+			for(int j=0;j<3;++j)
+			{
+				cout<<i->node[i1][j]<<'\t';
+			}
+		}
+		cout<<endl;
+	}
+	
+	while(!queue.empty())
+	{
+		Node tmp = queue.top();
+		for(int i=0;i<3;++i)
+		{
+			for(int j=0;j<3;++j)
+			{
+				cout<<tmp.node[i][j]<<'\t';
+			}
+		}
+		cout<<"f:"<<tmp.f;
+		queue.pop();
+		cout<<endl;
+	}
+	*/
+
 }
 
 
@@ -259,7 +348,7 @@ void main ()
 
 	cout<<"H(input):"<<calculateHValue(input)<<endl;
 
-	aStarAlgorithm(input,numbers);
+	cout<<"Algorithm output:"<<aStarAlgorithm(input,numbers)<<endl;
 	
 	for ( int i=0;i<9;++i)
 		cout<<"Coordinates of "<<i<<'\t'<<'('<<findCoordinates(i)[0]<<','<<findCoordinates(i)[1]<<')'<<endl;
