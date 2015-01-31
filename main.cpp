@@ -21,11 +21,6 @@ public:
 	float g;
 	float h;
 	float f;
-	Node* left;
-	Node* right;
-	Node* up;
-	Node* down;
-
 };
 
 class mycomparison
@@ -45,6 +40,13 @@ public:
 
 
 Node current;
+
+	Node outputLeft;
+	Node outputRight;
+	Node outputUp;
+	Node outputDown;
+	Node output;
+
 
 typedef priority_queue< Node ,vector< Node >,mycomparison > queuetype;
 
@@ -104,13 +106,10 @@ int calculateHValue ( int problem[][3] )
 }
 
 /* Expands the current node into the possible successors*/
-Node expand ( int input[][3] )
+Node expand ( int input[][3], queuetype fringe )
 {
-	Node outputLeft;
-	Node outputRight;
-	Node outputUp;
-	Node outputDown;
-	Node output;
+
+
 
 	for( int i=0;i<3;++i)
 	{
@@ -124,22 +123,9 @@ Node expand ( int input[][3] )
 		}
 	}
 
-	outputRight.h = 0;
-	outputLeft.h = 0;
-	outputUp.h = 0;
-	outputDown.h = 0;
 
-	outputRight.g = 0;
-	outputLeft.g = 0;
-	outputUp.g = 0;
-	outputDown.g = 0;
 
-	outputRight.f = 0;
-	outputLeft.f = 0;
-	outputUp.f = 0;
-	outputDown.f = 0;
-
-	int x,y;
+	int x=0,y=0;
 	for (int i=0;i<3;++i)
 	{
 		for (int j=0;j<3;++j)
@@ -165,7 +151,7 @@ Node expand ( int input[][3] )
 		outputRight.h  = calculateHValue(outputRight.node);
 		outputRight.f = outputRight.g + outputRight.h;
 		cout<<outputRight.f<<endl;
-		tree.push(outputRight);
+		fringe.push(outputRight);
 	}
 		
 	/* left (i,j-1)*/
@@ -180,7 +166,7 @@ Node expand ( int input[][3] )
 		outputLeft.h = calculateHValue(outputLeft.node);
 		outputLeft.f = outputLeft.g + outputLeft.h;
 		cout<<outputLeft.f<<endl;
-		tree.push(outputLeft);
+		fringe.push(outputLeft);
 	}
 
 	/* up (i-1,j) */
@@ -195,7 +181,7 @@ Node expand ( int input[][3] )
 		outputUp.h = calculateHValue(outputUp.node);
 		outputUp.f = outputUp.g + outputUp.h;
 		cout<<outputUp.f<<endl;
-		tree.push(outputUp);
+		fringe.push(outputUp);
 	}
 
 	/* down (i+1,j) */ 
@@ -210,14 +196,14 @@ Node expand ( int input[][3] )
 		outputDown.h = calculateHValue(outputDown.node);
 		outputDown.f = outputDown.g + outputDown.h;
 		cout<<outputDown.f<<endl;
-		tree.push(outputDown);
+		fringe.push(outputDown);
 	}
 	
-	current = tree.top();
+	current = fringe.top();
 
-	while(!tree.empty())
-		tree.pop();
 
+	
+	cout<<"------------------------------------------------------------------------------------"<<endl;
 
 	return current;
 
@@ -225,30 +211,16 @@ Node expand ( int input[][3] )
 
 bool isGoal( Node x )
 {
-	bool result =true;
-	bool temp[3][3];
-	for(int i=0;i<3;++i)
+	bool result = false;
+
+	if( x.node[0][0] == 0 && x.node[0][1] ==1 && x.node[0][2] ==2 \
+		&& x.node[1][0]==3 && x.node[1][1] ==4 && x.node[1][2] ==5 \
+		&& x.node[2][0] ==6	&& x.node[2][1]==7 && x.node[2][2]==8 )
 	{
-		for(int j=0;j<3;++j)
-		{
-			if( x.node[i][j] = numbers[i][j] )
-			{
-				temp[i][j] = true;
-			}
-			else
-			{
-				temp[i][j] = false;
-			}
-		}
+		result = true;
 	}
 
-	for (int i=0;i<3;++i)
-	{
-		for(int j=0;j<3;++j)
-		{
-			result&=temp[i][j];
-		}
-	}
+
 	return result;
 }
 
@@ -261,6 +233,9 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 	queuetype fringe;
 	
 	Node initial;
+	Node current;
+	Node successor;
+	
 	for(int i=0;i<3;++i)
 	{
 		for(int j=0;j<3;++j)
@@ -270,19 +245,17 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 	}
 	fringe.push(initial);
 
+	current = initial;
+
 	while(1)
 	{
-		
-		Node next = expand(fringe.top().node);
-
-		fringe.push(next);
 
 		if( fringe.empty() )
 		{
 			return 0;
 		}
 		
-		if ( isGoal(fringe.top()) ) 
+		if ( isGoal(current) ) 
 		{
 			cout<<"fringe:"<<endl;
 			for(int i=0;i<3;++i)
@@ -297,54 +270,51 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 			return fringe.size();
 		}
 
+
+
+		
+		successor = expand(current.node,fringe);
+
+		if ( successor.node == current.node )
+		{
+			fringe.pop();
+			successor = fringe.top();
+		}
+		else
+		{
+			current = successor;
+		}
+		/*
+		if( current.node == successor.node){
+			continue;
+		}
+		else
+		{
+			fringe.push(successor);
+		}
+		*/
+
 	}	
-	/*
-	for(int i1=0;i1<3;++i1)
-	{		
-		for(int j=0;j<3;++j)
-		{
-			cout<<next.node[i1][j]<<'\t';
-		}
-	}
-	cout<<endl;
-	*/
-
-
-	/*n
-	for( vector < Node >::iterator i=tree.begin();i!=tree.end();++i)
-	{
-		queue.push((*i));
-		for(int i1=0;i1<3;++i1)
-		{
-			for(int j=0;j<3;++j)
-			{
-				cout<<i->node[i1][j]<<'\t';
-			}
-		}
-		cout<<endl;
-	}
 	
-	while(!queue.empty())
-	{
-		Node tmp = queue.top();
-		for(int i=0;i<3;++i)
-		{
-			for(int j=0;j<3;++j)
-			{
-				cout<<tmp.node[i][j]<<'\t';
-			}
-		}
-		cout<<"f:"<<tmp.f;
-		queue.pop();
-		cout<<endl;
-	}
-	*/
-
 }
 
 
 void main ()
 {
+	outputRight.h = 0;
+	outputLeft.h = 0;
+	outputUp.h = 0;
+	outputDown.h = 0;
+
+	outputRight.g = 0;
+	outputLeft.g = 0;
+	outputUp.g = 0;
+	outputDown.g = 0;
+
+	outputRight.f = 0;
+	outputLeft.f = 0;
+	outputUp.f = 0;
+	outputDown.f = 0;
 
 	cout<<"H(input):"<<calculateHValue(input)<<endl;
 
