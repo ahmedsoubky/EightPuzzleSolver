@@ -16,7 +16,7 @@ int input[3][3] = { {1,6,4} ,{8,7,0} ,{3,2,5} };
 /* The numbers in their correct positions to be used in the calculation of Manhattan distance */
 int numbers[3][3] = { {0,1,2} ,{3,4,5},{6,7,8} } ;
 
-
+int steps =0;
 
 typedef struct Node
 {
@@ -281,12 +281,12 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 		if( currentNode == goalNode )
 		{
 
-			cout<<"Solution Reached"<<endl;
+			cout<<"Solution Reached"<<currentNode.g<<endl;
 
 			for( int i=0;i<3;++i)
 				for ( int j=0;j<3;++j)
 					cout<<currentNode.tileset[i][j]<<' ';
-			return fringe.size();
+			return steps;
 		}
 		
 		expand(currentNode,&successors);
@@ -321,6 +321,7 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 				successors.pop();
 
 			}
+			++steps;
 
 		}
 		
@@ -334,6 +335,8 @@ int aStarAlgorithm ( int problem[][3] , int goal[][3])
 
 void main ( )
 {
+
+	
 	cout<<"Algorithm output:"<<aStarAlgorithm(input,numbers)<<endl;
 
 }
