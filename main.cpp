@@ -2,66 +2,61 @@
 # include <vector>
 # include <queue> 
 # include <cmath>
- 
+# include <algorithm>
+# include <string>
+# include <map>
+
 
 using namespace std;
 
 
 /* Input to the 3x3 puzzle as a 2D array */
-int input[3][3] = { {7,2,4} ,{5,0,6} ,{8,3,1} };
+int input[3][3] = { {1,6,4} ,{8,7,0} ,{3,2,5} };
 
 /* The numbers in their correct positions to be used in the calculation of Manhattan distance */
 int numbers[3][3] = { {0,1,2} ,{3,4,5},{6,7,8} } ;
 
 
-class Node
+
+typedef struct Node
 {
-public:
-	int node[3][3];
+	int tileset[3][3];
+	float f;
 	float g;
 	float h;
-	float f;
-};
+	bool visited;
+	inline bool operator==(const Node& x)
+	{
+		if( x.tileset[0][0] == this->tileset[0][0] && x.tileset[0][1] ==this->tileset[0][1] && x.tileset[0][2] ==this->tileset[0][2] \
+			&& x.tileset[1][0]==this->tileset[1][0] && x.tileset[1][1] ==this->tileset[1][1] && x.tileset[1][2] ==this->tileset[1][2] \
+			&& x.tileset[2][0] ==this->tileset[2][0]	&& x.tileset[2][1]==this->tileset[2][1] && x.tileset[2][2]==this->tileset[2][2] )
+			return true;
+		else
+			return false;
+	}
 
-class mycomparison
+}Node;
+
+struct LessThanF
 {
-  bool reverse;
-public:
-  mycomparison(const bool& revparam=false)
-    {reverse=revparam;}
-  bool operator() (const Node& lhs, const Node&rhs) const
+  bool operator()(const Node& lhs, const Node& rhs) const
   {
-	  if (reverse) return (lhs.f>rhs.f);
-    else return (lhs.f<rhs.f);
+    return lhs.f > rhs.f;
   }
 };
 
-
-
-
-Node current;
-
-	Node outputLeft;
-	Node outputRight;
-	Node outputUp;
-	Node outputDown;
-	Node output;
-
-
-typedef priority_queue< Node ,vector< Node >,mycomparison > queuetype;
-
-queuetype tree(mycomparison(true));
+typedef priority_queue< Node ,vector< Node >, LessThanF > queuetype;
 
 int coordinates[] = {0,1};
 
+vector< Node > visited_nodes;
 
 void swap(Node* input,int i1,int j1,int i2, int j2) 
 {
-	int temp = input->node[i2][j2];
-	input->node[i2][j2] = input->node[i1][j1];
-	input->node[i1][j1] =temp;
+	int temp = input->tileset[i2][j2];
+	input->tileset[i2][j2] = input->tileset[i1][j1];
+	input->tileset[i1][j1] =temp;
 }
-
 
 /* Returns the correct (goal) coordinates of a given number x in the puzzle */
 int* findCoordinates(int x)
@@ -95,6 +90,7 @@ int calcluateManhattanDistance ( int problem[][3], int i, int j )
 	}
 }
 
+
 /* Calculates the h-value for a given array */
 int calculateHValue ( int problem[][3] ) 
 {
@@ -105,24 +101,39 @@ int calculateHValue ( int problem[][3] )
 	return result;
 }
 
-/* Expands the current node into the possible successors*/
-Node expand ( int input[][3], queuetype fringe )
+bool isGoal( Node x )
 {
+	bool result = false;
+
+	if( x.tileset[0][0] == 0 && x.tileset[0][1] ==1 && x.tileset[0][2] ==2 \
+		&& x.tileset[1][0]==3 && x.tileset[1][1] ==4 && x.tileset[1][2] ==5 \
+		&& x.tileset[2][0] ==6	&& x.tileset[2][1]==7 && x.tileset[2][2]==8 )
+	{
+		result = true;
+	}
 
 
+	return result;
+}
 
+void expand( Node& current , queuetype* p)
+{
+	queuetype pq;
+	Node outputRight;
+	Node outputLeft;
+	Node outputUp;
+	Node outputDown;
+	string value;
 	for( int i=0;i<3;++i)
 	{
 		for(int j=0;j<3;++j)
 		{
-			output.node[i][j] = input[i][j];
-			outputRight.node[i][j] = input[i][j];
-			outputLeft.node[i][j] = input[i][j];
-			outputUp.node[i][j] = input[i][j];
-			outputDown.node[i][j] = input[i][j];
+			outputRight.tileset[i][j] = current.tileset[i][j];
+			outputLeft.tileset[i][j] = current.tileset[i][j];
+			outputUp.tileset[i][j] = current.tileset[i][j];
+			outputDown.tileset[i][j] = current.tileset[i][j];
 		}
 	}
-
 
 
 	int x=0,y=0;
@@ -130,7 +141,7 @@ Node expand ( int input[][3], queuetype fringe )
 	{
 		for (int j=0;j<3;++j)
 		{
-			if( 0==input[i][j])
+			if( 0==current.tileset[i][j])
 			{
 				x = i;
 				y = j;
@@ -144,44 +155,61 @@ Node expand ( int input[][3], queuetype fringe )
 	{
 		swap(&outputRight,x,y,x,y+1);
 		for( int i=0;i<3;++i)
+		{
 			for(int j=0;j<3;++j)
-				cout<<outputRight.node[i][j]<<'\t';
-		cout<<"right"<<' ';
-		outputRight.g += 1;
-		outputRight.h  = calculateHValue(outputRight.node);
+			{
+				cout<<outputRight.tileset[i][j]<<'\t';
+			}
+			cout<<endl;
+		}
+		value="right";
+		outputRight.g = current.g + 1;
+		outputRight.h = calculateHValue(outputRight.tileset);
 		outputRight.f = outputRight.g + outputRight.h;
 		cout<<outputRight.f<<endl;
-		fringe.push(outputRight);
+		cout<<value<<endl;
+		p->push(outputRight);
 	}
-		
+
 	/* left (i,j-1)*/
 	if ( !( (y-1) < 0 ) )
 	{
 		swap(&outputLeft,x,y,x,y-1);
 		for( int i=0;i<3;++i)
+		{
 			for(int j=0;j<3;++j)
-				cout<<outputLeft.node[i][j]<<'\t';
-		cout<<"left"<<' ';
-		outputLeft.g +=1;
-		outputLeft.h = calculateHValue(outputLeft.node);
+			{
+				cout<<outputLeft.tileset[i][j]<<'\t';
+			}
+			cout<<endl;
+		}
+		value="left";
+		outputLeft.g = current.g + 1;
+		outputLeft.h = calculateHValue(outputLeft.tileset);
 		outputLeft.f = outputLeft.g + outputLeft.h;
-		cout<<outputLeft.f<<endl;
-		fringe.push(outputLeft);
+		cout<<value<<endl;
+		p->push(outputLeft);
 	}
+
 
 	/* up (i-1,j) */
 	if ( !( (x-1) < 0) ) 
 	{
 		swap(&outputUp,x,y,x-1,y);
 		for( int i=0;i<3;++i)
+		{
 			for(int j=0;j<3;++j)
-				cout<<outputUp.node[i][j]<<'\t';
-		cout<<"up"<<' ';
-		outputUp.g += 1;
-		outputUp.h = calculateHValue(outputUp.node);
+			{
+				cout<<outputUp.tileset[i][j]<<'\t';
+			}
+			cout<<endl;
+		}
+		value="up";
+		outputUp.g = current.g + 1;
+		outputUp.h = calculateHValue(outputUp.tileset);
 		outputUp.f = outputUp.g + outputUp.h;
-		cout<<outputUp.f<<endl;
-		fringe.push(outputUp);
+		cout<<value<<endl;
+		p->push(outputUp);
 	}
 
 	/* down (i+1,j) */ 
@@ -189,148 +217,123 @@ Node expand ( int input[][3], queuetype fringe )
 	{
 		swap(&outputDown,x,y,x+1,y);
 		for( int i=0;i<3;++i)
+		{
 			for(int j=0;j<3;++j)
-				cout<<outputDown.node[i][j]<<'\t';
-		cout<<"down"<<' ';
-		outputDown.g += 1;
-		outputDown.h = calculateHValue(outputDown.node);
+			{
+				cout<<outputDown.tileset[i][j]<<'\t';
+			}
+			cout<<endl;
+			}
+		value="down";
+		outputDown.g = current.g + 1;
+		outputDown.h = calculateHValue(outputDown.tileset);
 		outputDown.f = outputDown.g + outputDown.h;
-		cout<<outputDown.f<<endl;
-		fringe.push(outputDown);
+		cout<<value<<endl;
+		p->push(outputDown);
 	}
+	cout<<"========================"<<value<<"============================="<<endl;
 	
-	current = fringe.top();
-
-
-	
-	cout<<"------------------------------------------------------------------------------------"<<endl;
-
-	return current;
+	//p = &pq;
 
 }
 
-bool isGoal( Node x )
-{
-	bool result = false;
 
-	if( x.node[0][0] == 0 && x.node[0][1] ==1 && x.node[0][2] ==2 \
-		&& x.node[1][0]==3 && x.node[1][1] ==4 && x.node[1][2] ==5 \
-		&& x.node[2][0] ==6	&& x.node[2][1]==7 && x.node[2][2]==8 )
-	{
-		result = true;
-	}
-
-
-	return result;
-}
 
 
 /* Implementation of the A* algorithm based on the Manhattan distance heuristic */
 int aStarAlgorithm ( int problem[][3] , int goal[][3])
 {
-
-	queuetype queue;
+	Node startNode;
+	Node goalNode;
+	Node currentNode;
+	
+	queuetype successors;
 	queuetype fringe;
-	
-	Node initial;
-	Node current;
-	Node successor;
-	
+
 	for(int i=0;i<3;++i)
 	{
 		for(int j=0;j<3;++j)
 		{
-			initial.node[i][j] = problem[i][j];
+			startNode.tileset[i][j] = problem[i][j];
+			goalNode.tileset[i][j] = goal[i][j];
+			currentNode.tileset[i][j] = problem[i][j];
 		}
 	}
-	fringe.push(initial);
+	
+	startNode.g = 0;
+	startNode.h = calculateHValue(startNode.tileset);
+	startNode.f = startNode.g + startNode.h;
 
-	current = initial;
 
-	while(1)
-	{
+	currentNode.g = 0;
+	currentNode.h = calculateHValue(startNode.tileset);
+	currentNode.f = currentNode.g + currentNode.h;
 
-		if( fringe.empty() )
-		{
-			return 0;
-		}
 		
-		if ( isGoal(current) ) 
+	fringe.push(currentNode);
+
+
+	while(!fringe.empty())
+	{	
+		currentNode = fringe.top();	
+	
+
+		if( currentNode == goalNode )
 		{
-			cout<<"fringe:"<<endl;
-			for(int i=0;i<3;++i)
-			{
-				for(int j=0;j<3;++j)
-				{
-					cout<<fringe.top().node[i][j]<<'\t';
-				}
-			}
-			cout<<"test"<<endl;
-			
+
+			cout<<"Solution Reached"<<endl;
+
+			for( int i=0;i<3;++i)
+				for ( int j=0;j<3;++j)
+					cout<<currentNode.tileset[i][j]<<' ';
 			return fringe.size();
 		}
-
-
-
 		
-		successor = expand(current.node,fringe);
+		expand(currentNode,&successors);
 
-		if ( successor.node == current.node )
+
+		while( !successors.empty())
 		{
-			fringe.pop();
-			successor = fringe.top();
+
+			vector< Node>::iterator it;
+
+			it = find(visited_nodes.begin(),visited_nodes.end(),successors.top());
+
+			if( it!= visited_nodes.end() )
+			{
+				if( successors.top().f < it->f )
+				{
+					fringe.push( successors.top());
+					visited_nodes.push_back(successors.top());
+					successors.pop();
+				}
+				else
+				{
+					successors.pop();
+					continue;
+				}
+			}
+			else
+			{
+				
+				fringe.push(successors.top());
+				visited_nodes.push_back(successors.top());
+				successors.pop();
+
+			}
+
 		}
-		else
-		{
-			current = successor;
-		}
-		/*
-		if( current.node == successor.node){
-			continue;
-		}
-		else
-		{
-			fringe.push(successor);
-		}
-		*/
+		
+		fringe.pop();
 
-	}	
-	
-}
-
-
-void main ()
-{
-	outputRight.h = 0;
-	outputLeft.h = 0;
-	outputUp.h = 0;
-	outputDown.h = 0;
-
-	outputRight.g = 0;
-	outputLeft.g = 0;
-	outputUp.g = 0;
-	outputDown.g = 0;
-
-	outputRight.f = 0;
-	outputLeft.f = 0;
-	outputUp.f = 0;
-	outputDown.f = 0;
-
-	cout<<"H(input):"<<calculateHValue(input)<<endl;
-
-	cout<<"Algorithm output:"<<aStarAlgorithm(input,numbers)<<endl;
-	
-	for ( int i=0;i<9;++i)
-		cout<<"Coordinates of "<<i<<'\t'<<'('<<findCoordinates(i)[0]<<','<<findCoordinates(i)[1]<<')'<<endl;
-
-
-	for ( int i=0;i<3;++i)
-	{
-		for( int j=0;j<3;++j)
-		{
-			cout<<"Distance :"<<calcluateManhattanDistance(input,i,j)<<endl;
-		}
+		cout<<"F"<<fringe.size()<<endl;
 	}
 
 }
 
+
+void main ( )
+{
+	cout<<"Algorithm output:"<<aStarAlgorithm(input,numbers)<<endl;
+
+}
